@@ -1,5 +1,6 @@
 import Navbar from "./Components/Navbar";
 import Category from "./Components/Category";
+import ProtectedRoute from "./Components/ProtectedRoute";
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import SignIn from "./Pages/SignIn";
@@ -107,8 +108,10 @@ const App = () => {
 
         <Route path="*" element={<Error />} />
         <Route path="/about" element={<About />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
         <Route path="/searchpage" element={<SearchPage />} />
       </Routes>
     </Router>

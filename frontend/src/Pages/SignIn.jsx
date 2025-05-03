@@ -32,7 +32,8 @@ const SignIn = () => {
         }
         setToken(res.data);
         localStorage.setItem("token", res.data); // Store the token in localStorage
-
+        console.log(res);
+        localStorage.setItem("role", res.role);
         // console.log(res);
         window.location = `/${res.route}`;
       } else {

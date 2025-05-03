@@ -195,13 +195,16 @@ app.post("/signin", async (req, res) => {
 
     console.log(user);
     let route = "";
+    let role = 0;
     if (user.role === 1) {
       route = "dashboard";
+      role = 1;
     }
     const token = user.generateAuthToken();
     res.status(200).send({
       userId: user._id,
       token: token,
+      role: role,
       route: route,
       message: "logged in successfully",
     });
