@@ -1,5 +1,6 @@
 import Navbar from "./Components/Navbar";
 import Category from "./Components/Category";
+import SideNav from "./Components/SideNav";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
@@ -10,6 +11,8 @@ import Product from "./Pages/Product";
 import Error from "./Pages/Error";
 import About from "./Pages/About";
 import Dashboard from "./Pages/Dashboard";
+import Members from "./Pages/Members";
+import AllProducts from "./Pages/AllProducts";
 import SearchPage from "./Pages/SearchPage";
 import Likes from "./Pages/Likes";
 
@@ -111,6 +114,8 @@ const App = () => {
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/members" element={<Members />} />
+          <Route path="/allproducts" element={<AllProducts />} />
         </Route>
         <Route path="/searchpage" element={<SearchPage />} />
       </Routes>

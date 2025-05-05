@@ -37,25 +37,23 @@ app.get("/", (req, res) => {
   res.send("Welcome to the root path!");
 });
 
-app.get("/products", (req, res) => {
-  // current page
-  const page = req.query.p || 0;
-  const productsPerPage = 80;
+app.get("/products", async (req, res) => {
+  const page = parseInt(req.query.page) || 0; // changed from p → page
+  const productsPerPage = 25;
 
-  let products = [];
+  try {
+    const products = await db
+      .collection("products")
+      .find()
+      .sort({ subcategory: 1 })
+      .skip(page * productsPerPage)
+      .limit(productsPerPage)
+      .toArray();
 
-  db.collection("products")
-    .find()
-    .sort({ subcategory: 1 })
-    .skip(page * productsPerPage)
-    .limit(productsPerPage)
-    .forEach((product) => products.push(product))
-    .then(() => {
-      res.status(200).json(products);
-    })
-    .catch(() => {
-      res.status(500).json({ error: "Could not fetch the documents" });
-    });
+    res.status(200).json(products);
+  } catch (err) {
+    res.status(500).json({ error: "Could not fetch the documents" });
+  }
 });
 
 //get specific subcategory
@@ -284,6 +282,26 @@ app.get("/likes/:userId", (req, res) => {
     .catch((err) => {
       res.status(500).json({ error: "Error fetching liked products" });
     });
+});
+
+// get all cart
+app.get("/carts", async (req, res) => {
+  try {
+    const carts = await db.collection("carts").find().toArray();
+    res.status(200).json(carts);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching cart" });
+  }
+});
+
+// get all members
+app.get("/users", async (req, res) => {
+  try {
+    const users = await db.collection("users").find().toArray();
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching users" });
+  }
 });
 
 app.get("/users/:userId", async (req, res) => {
