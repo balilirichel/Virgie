@@ -233,6 +233,66 @@ app.post("/likes/add", (req, res) => {
       res.status(500).json({ error: "Could not create new document" });
     });
 });
+// app.post("/cart/add", (req, res) => {
+//   const { userId, productId } = req.body; // Extract userId and productId from the request body
+
+//   if (!userId || !productId) {
+//     return res.status(400).json({ error: "userId and productId are required" });
+//   }
+
+//   const cart = {
+//     userId,
+//     productId,
+//     // You can add more fields to the 'cart' object if needed
+//   };
+
+//   db.collection("carts")
+//     .insertOne(cart)
+//     .then((result) => {
+//       res.status(201).json(result);
+//     })
+//     .catch((err) => {
+//       res.status(500).json({ error: "Could not create new document" });
+//     });
+// });
+// Add to cart
+app.post("/cart/add", async (req, res) => {
+  const { userId, productId, quantity } = req.body;
+  if (!userId || !productId) {
+    return res.status(400).json({ error: "userId and productId are required" });
+  }
+  const qty = quantity && Number(quantity) > 0 ? Number(quantity) : 1;
+  try {
+    // Fetch product price
+    const product = await db
+      .collection("products")
+      .findOne({ _id: new ObjectId(productId) });
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    const price = product.saleprice || product.originalprice;
+
+    // Check if already in cart
+    const existing = await db
+      .collection("carts")
+      .findOne({ userId, productId });
+    if (existing) {
+      // If already in cart, increment the quantity and update price
+      await db
+        .collection("carts")
+        .updateOne(
+          { userId, productId },
+          { $inc: { quantity: qty }, $set: { price } }
+        );
+      return res.status(200).json({ message: "Cart quantity updated" });
+    }
+    const cart = { userId, productId, quantity: qty, price };
+    const result = await db.collection("carts").insertOne(cart);
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Could not add to cart" });
+  }
+});
 
 app.delete("/likes/delete/:id", (req, res) => {
   console.log(req.params.id);
@@ -250,6 +310,21 @@ app.delete("/likes/delete/:id", (req, res) => {
   }
 });
 
+app.delete("/carts/delete/:id", (req, res) => {
+  console.log(req.params.id);
+  if (ObjectId.isValid(req.params.id)) {
+    db.collection("carts")
+      .deleteOne({ _id: new ObjectId(req.params.id) })
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((err) => {
+        res.status(500).json({ error: "Could not delete document" });
+      });
+  } else {
+    res.status(500).json({ error: "Could not delete document" });
+  }
+});
 app.get("/likes/:userId/:productId", (req, res) => {
   const userId = req.params.userId;
   const productId = req.params.productId;

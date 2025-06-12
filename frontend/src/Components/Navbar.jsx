@@ -7,7 +7,7 @@ import {
   XMarkIcon,
   HeartIcon,
 } from "@heroicons/react/24/outline";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -19,6 +19,9 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [likedProductsCount, setLikedProductsCount] = useState(0);
   const [userFirstName, setUserFirstName] = useState("");
+  const [cartCount, setCartCount] = useState(0);
+  const [showLoader, setShowLoader] = useState(false);
+  const location = useLocation();
   const navigation = {
     categories: [
       {
@@ -129,6 +132,14 @@ export default function Navbar() {
 
     const userId = localStorage.getItem("userId");
     if (userId) {
+      fetch(`${process.env.BACKEND_URL}/users/${userId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setUserFirstName(data.firstName);
+        })
+        .catch((error) => {
+          console.error("Error fetching user data:", error);
+        });
       fetch(`${process.env.BACKEND_URL}/likes/${userId}`)
         .then((response) => response.json())
         .then((data) => {
@@ -137,20 +148,27 @@ export default function Navbar() {
         .catch((error) => {
           console.error("Error fetching liked products:", error);
         });
-
-      // Fetch firstName from the users endpoint
-      fetch(`${process.env.BACKEND_URL}/users/${userId}`)
+      // Fetch cart count
+      fetch(`${process.env.BACKEND_URL}/carts`)
         .then((response) => response.json())
         .then((data) => {
-          // Assuming the response contains a property called 'firstName'
-          const { firstName } = data;
-          setUserFirstName(firstName); // Set the first name to the state variable
+          const userCart = data.filter((item) => item.userId === userId);
+          setCartCount(
+            userCart.reduce((sum, item) => sum + (item.quantity || 1), 0)
+          );
         })
         .catch((error) => {
-          console.error("Error fetching user data:", error);
+          setCartCount(0);
         });
     }
   }, []);
+
+  useEffect(() => {
+    // Show loader on route change
+    setShowLoader(true);
+    const timer = setTimeout(() => setShowLoader(false), 700); // Adjust duration as needed
+    return () => clearTimeout(timer);
+  }, [location]);
 
   const handleLogout = () => {
     // Handle logout logic here (clear token, etc.)
@@ -162,6 +180,77 @@ export default function Navbar() {
 
   return (
     <div className="bg-white">
+      {showLoader && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white bg-opacity-70">
+          {/* Custom animated shopping cart loader */}
+          <div className="w-32 h-32 flex items-center justify-center">
+            <svg
+              className="animate-bounce"
+              width="80"
+              height="80"
+              viewBox="0 0 80 80"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g>
+                <rect
+                  x="18"
+                  y="25"
+                  width="44"
+                  height="28"
+                  rx="6"
+                  fill="#f472b6"
+                  stroke="#be185d"
+                  strokeWidth="2"
+                />
+                <rect
+                  x="22"
+                  y="29"
+                  width="36"
+                  height="16"
+                  rx="3"
+                  fill="#fff"
+                  stroke="#be185d"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx="28"
+                  cy="58"
+                  r="5"
+                  fill="#be185d"
+                  className="animate-spin-slow"
+                />
+                <circle
+                  cx="52"
+                  cy="58"
+                  r="5"
+                  fill="#be185d"
+                  className="animate-spin-slow"
+                />
+                <rect
+                  x="36"
+                  y="18"
+                  width="8"
+                  height="12"
+                  rx="3"
+                  fill="#be185d"
+                />
+                <rect
+                  x="44"
+                  y="18"
+                  width="4"
+                  height="8"
+                  rx="2"
+                  fill="#f472b6"
+                />
+              </g>
+            </svg>
+          </div>
+          <span className="mt-4 text-pink-700 font-semibold text-lg animate-pulse">
+            Loading Cart...
+          </span>
+        </div>
+      )}
       <Transition.Root show={open} as={Fragment}>
         <Dialog as="div" className="z-50 relative lg:hidden" onClose={setOpen}>
           <Transition.Child
@@ -345,7 +434,7 @@ export default function Navbar() {
       </Transition.Root>
 
       <header className="z-20 relative bg-white">
-        <p className="flex h-10 items-center justify-center bg-pink-600 px-4 text-sm text-sm font-medium text-white sm:px-6 lg:px-8">
+        <p className="flex h-10 items-center justify-center bg-pink-600 px-4 text-sm font-medium text-white sm:px-6 lg:px-8">
           Give a Heart to Your Favorite Avon Makeup Products: Like and Explore!
         </p>
 
@@ -543,19 +632,19 @@ export default function Navbar() {
                       aria-hidden="true"
                     />
                   </button>
-                </div>
-
-                <div className="ml-4 flow-root lg:ml-6">
-                  <a href="/likes" className="group -m-2 flex items-center p-2">
-                    <HeartIcon
-                      className="h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-                      aria-hidden="true"
-                    />
-                    <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">
-                      {likedProductsCount}
-                    </span>
-                    <span className="sr-only">items in cart, view bag</span>
-                  </a>
+                  {/* Cart icon with counter */}
+                  <button
+                    onClick={() => navigate("/cart")}
+                    className="relative ml-4 p-2 text-gray-400 hover:text-gray-500"
+                    title="View Cart"
+                  >
+                    <ShoppingBagIcon className="h-6 w-6" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">
+                        {cartCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

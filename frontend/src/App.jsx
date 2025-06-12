@@ -1,7 +1,7 @@
 import Navbar from "./Components/Navbar";
 import Category from "./Components/Category";
 import SideNav from "./Components/SideNav";
-import ProtectedRoute from "./Components/ProtectedRoute";
+import ProtectedRouteAdmin from "./Components/ProtectedRouteAdmin";
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import SignIn from "./Pages/SignIn";
@@ -15,6 +15,7 @@ import Members from "./Pages/Members";
 import AllProducts from "./Pages/AllProducts";
 import SearchPage from "./Pages/SearchPage";
 import Likes from "./Pages/Likes";
+import Cart from "./Pages/Cart";
 
 const App = () => {
   return (
@@ -106,13 +107,14 @@ const App = () => {
           element={<Subcategory category="Liquid Lip Color" />}
         />
         <Route path="/likes" element={<Likes />} />
+        <Route path="/cart" element={<Cart />} />
 
         <Route path="/products/:productId" element={<Product />} />
 
         <Route path="*" element={<Error />} />
         <Route path="/about" element={<About />} />
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRouteAdmin />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/members" element={<Members />} />
           <Route path="/allproducts" element={<AllProducts />} />

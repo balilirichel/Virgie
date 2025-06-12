@@ -14,6 +14,8 @@ export default function Product() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [addCart, setAddCart] = useState(false);
+  const [quantity, setQuantity] = useState(1); // Add quantity state
   const navigateTo = useNavigate();
 
   useEffect(() => {
@@ -35,8 +37,14 @@ export default function Product() {
             const likeResponse = await fetch(
               `${process.env.BACKEND_URL}/likes/${userId}/${productId}`
             );
+            const cartResponse = await fetch(
+              `${process.env.BACKEND_URL}/carts/${userId}/${productId}`
+            );
             if (likeResponse.status === 200) {
               setLiked(true);
+            }
+            if (cartResponse.status === 200) {
+              setAddCart(true);
             }
           }
           //new
@@ -131,6 +139,76 @@ export default function Product() {
       console.error("Error adding/removing from likes:", error);
     }
   };
+  const handleAddtoCart = async () => {
+    if (!token) {
+      alert("You need to be logged in.");
+      navigateTo("/signin"); // Redirect the user to /signin route
+      return;
+    }
+    try {
+      // If the product is not add to cart, send a POST request to add it
+      const response = await fetch(`${process.env.BACKEND_URL}/cart/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userId,
+          productId: productId,
+          quantity: quantity, // Send quantity
+        }),
+      });
+
+      if (response.status === 201) {
+        // The like was successfully added
+        setAddCart(true);
+        navigateTo("/cart"); // Redirect the user to /cart route
+      } else {
+        // Handle errors, e.g., show a message to the user
+      }
+    } catch (error) {
+      console.error("Error adding/removing from likes:", error);
+    }
+  };
+
+  const handleRemoveCart = async () => {
+    try {
+      // First, send a GET request to fetch the carts item's ID
+      const response = await fetch(
+        `${process.env.BACKEND_URL}/carts/${userId}/${productId}`
+      );
+      if (response.status === 200) {
+        const cartVar = await response.json();
+
+        // Now that you have the liked item's ID, you can send a DELETE request to remove it
+        const deleteResponse = await fetch(
+          `${process.env.BACKEND_URL}/carts/delete/${cartVar._id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (deleteResponse.status === 204 || 200) {
+          // The like was successfully removed
+          setAddCart(false);
+          window.location.reload();
+        } else {
+          console.error(
+            "Failed to remove the like. Status code: " + deleteResponse.status
+          );
+        }
+      } else {
+        console.error(
+          "Failed to fetch liked item. Status code: " + response.status
+        );
+      }
+    } catch (error) {
+      console.error("Error removing from likes:", error);
+    }
+  };
 
   // If product is found, continue rendering the product details
   return (
@@ -169,6 +247,35 @@ export default function Product() {
                 )}
               </div>
 
+              {/* Quantity Selector */}
+              <div className="mt-6 flex items-center gap-2">
+                <span className="text-sm font-medium">Quantity:</span>
+                <button
+                  type="button"
+                  className="px-2 py-1 border rounded"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) =>
+                    setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                  }
+                  className="w-32 text-center border rounded"
+                />
+                <button
+                  type="button"
+                  className="px-2 py-1 border rounded"
+                  onClick={() => setQuantity((q) => q + 1)}
+                >
+                  +
+                </button>
+              </div>
+
               <div className="mt-10">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-medium text-gray-900">
@@ -195,6 +302,16 @@ export default function Product() {
                 }`}
               >
                 {liked ? "Remove from likes" : "Add to likes"}
+              </button>
+
+              <button
+                type="button"
+                onClick={addCart ? handleRemoveCart : handleAddtoCart}
+                className={`mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-pink-600 px-8 py-3 text-base font-medium text-white hover-bg-pink-700 focus:outline-none focus:ring-2 focus-ring-pink-500 focus-ring-offset-2${
+                  addCart ? "bg-gray-300" : ""
+                }`}
+              >
+                {addCart ? "Remove from Cart" : "Add to Cart"}
               </button>
 
               <div className="py-10">
