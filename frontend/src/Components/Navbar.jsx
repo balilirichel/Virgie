@@ -393,6 +393,14 @@ export default function Navbar() {
                     // User is logged in, show "Logged in" message and logout button
                     <>
                       <div className="flow-root">
+                        <a
+                          href="/orders"
+                          className="font-medium text-gray-900 hover:text-pink-600"
+                        >
+                          My Orders
+                        </a>
+                      </div>
+                      <div className="flow-root">
                         <span className="font-medium text-gray-900 hover:text-gray-800">
                           Welcome {userFirstName}
                         </span>
@@ -588,6 +596,12 @@ export default function Navbar() {
                   {isLoggedIn ? (
                     // User is logged in, show "Logged in" message and logout button
                     <>
+                      <a
+                        href="/orders"
+                        className="text-sm font-medium text-gray-700 hover:text-gray-800 mr-4"
+                      >
+                        My Orders
+                      </a>
                       <span className="text-sm font-medium text-gray-700 mr-4">
                         Welcome {userFirstName}
                       </span>

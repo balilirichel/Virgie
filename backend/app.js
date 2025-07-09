@@ -7,6 +7,7 @@ var cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const passwordComplexity = require("joi-password-complexity");
+const Order = require("./models/orderModel");
 
 require("dotenv").config();
 
@@ -395,6 +396,93 @@ app.get("/users/:userId", async (req, res) => {
 });
 
 //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+// Generate order number
+const generateOrderNumber = () => {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `ORD-${timestamp}-${random}`;
+};
+
+// Create order (checkout)
+app.post("/orders/create", async (req, res) => {
+  try {
+    const { userId, items, shippingAddress, paymentMethod } = req.body;
+
+    if (!userId || !items || !shippingAddress || !paymentMethod) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Items array is required and cannot be empty" });
+    }
+
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shippingFee = 50; // Fixed shipping fee
+    const total = subtotal + shippingFee;
+
+    // Generate unique order number
+    const orderNumber = generateOrderNumber();
+
+    // Create order
+    const order = new Order({
+      userId,
+      items: items.map(item => ({
+        ...item,
+        total: item.price * item.quantity
+      })),
+      shippingAddress,
+      paymentMethod,
+      subtotal,
+      shippingFee,
+      total,
+      orderNumber,
+    });
+
+    const savedOrder = await order.save();
+
+    // Clear user's cart after successful order
+    await db.collection("carts").deleteMany({ userId });
+
+    res.status(201).json({
+      message: "Order created successfully",
+      order: savedOrder,
+    });
+  } catch (error) {
+    console.error("Error creating order:", error);
+    res.status(500).json({ error: "Could not create order" });
+  }
+});
+
+// Get user orders
+app.get("/orders/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Could not fetch orders" });
+  }
+});
+
+// Get single order
+app.get("/orders/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+    
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    
+    res.status(200).json(order);
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({ error: "Could not fetch order" });
+  }
+});
+
 const requireSignIn = async (req, res, next) => {
   try {
     const decode = jwt.verify(

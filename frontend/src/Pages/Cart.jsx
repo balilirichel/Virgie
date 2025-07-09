@@ -140,8 +140,8 @@ export default function Cart() {
             </div>
             <div className="flex justify-end mt-4">
               <button
+                onClick={() => navigate("/checkout")}
                 className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded font-semibold shadow"
-                disabled
               >
                 Checkout
               </button>

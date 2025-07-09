@@ -16,6 +16,9 @@ import AllProducts from "./Pages/AllProducts";
 import SearchPage from "./Pages/SearchPage";
 import Likes from "./Pages/Likes";
 import Cart from "./Pages/Cart";
+import Checkout from "./Pages/Checkout";
+import OrderConfirmation from "./Pages/OrderConfirmation";
+import Orders from "./Pages/Orders";
 
 const App = () => {
   return (
@@ -108,6 +111,9 @@ const App = () => {
         />
         <Route path="/likes" element={<Likes />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+        <Route path="/orders" element={<Orders />} />
 
         <Route path="/products/:productId" element={<Product />} />
 
